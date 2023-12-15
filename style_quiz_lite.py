@@ -29,6 +29,7 @@ global final_data
 return_data = json.load(f)
 f.close()
 
+# pulls style images from the public githhub repo
 ROOT_PATH = "https://github.com/entropicCowboy/fashion-rec-sys/blob/master/image_scraping/style_images/"
 styles = {}
 global total_style_names
@@ -73,9 +74,7 @@ class Style:
         global best_ratio
         global best_style
         global liked_styles
-        # if status != 1 and status != -1:
-        #     raise Exception("Status must be equal to 1 or -1")
-        # self.ratio += status/self.num_pics
+
         self.ratio += status/self.num_pics
         if status == 1:
             liked_styles.add(self)
@@ -83,6 +82,7 @@ class Style:
             best_ratio = self.ratio
             best_style = self.name
 
+    """For an inputed style and status, updates similar styles' equilibriums according to that status"""
     def update_similar_ratios(self, status:float) -> None:
         # allow the style to have an effect on similar styles
         for style_name in recommendations_list[self.name]:
@@ -97,8 +97,7 @@ class Style:
         global best_style
         global best_ratio
         # if any style has reached the defined equilibriums, update best style and ratio
-        # if the style has 5 pics, all but 1 must be liked
-        # if the style has < 5, all must be liked
+        # if the style has 5 pics, all but 1 must be liked; if it has < 5, all must be liked
         if self.num_pics < 6:
             if self.ratio >= 0.8:
                 any_equil_reached = True
@@ -106,14 +105,6 @@ class Style:
                 best_style = self.name
                 print("1st equil reached")
                 return True
-        # # if the styles has less than 10 pictures, a greater majority must be liked by the user
-        # elif self.num_pics < 10:
-        #     if self.ratio >= 0.7:
-        #         any_equil_reached = True
-        #         best_ratio = self.ratio
-        #         best_style = self.name
-        #         print("2nd equil reached")
-        #         return True
         else:
             if self.ratio > 0.5:
                 any_equil_reached = True
@@ -132,7 +123,8 @@ def on_press(key) -> None:
         k = key.char
         if k == 'y':
             status = 1.0
-        elif k == 'n':
+        # disliking an image has a smaller effect on the equil than liking one
+        elif k == 'n': 
             status = -0.5
     except AttributeError:
         pass
@@ -169,7 +161,8 @@ def present_image(style: Style) -> bool:
     return style.equil_reached()
 
 
-
+"""For each of the 20 total clusters, it randomly selects a style from the cluster, and a random image from the style,
+then presents it to the user"""
 def initial_present():
     for cluster in new_clusters:
         num_styles = len(cluster)
@@ -181,7 +174,7 @@ def initial_present():
         present_image(style)
 
 
-
+"""Prints the user's top style, and its description, and next top 5 styles along with a short message"""
 def print_results():
     print("\n******************************************************\n")
     print(f"Style: {best_style}")
@@ -209,6 +202,7 @@ def print_results():
         print("\nKey brands: ")
         print(", ".join(brands))
     
+    # print next top 5 styles
     print("\nDoesn't seem accurate? Here are your next top 5 styles:\n")
     top_styles = []
     for style in liked_styles:
@@ -237,6 +231,9 @@ def show_intro():
         if status != 0:
             break
 
+"""The style quiz: begins with showing the user an image describing the quiz they are about to take, then presents them with an 
+image from each cluster 5 times, it will then either continue calling initial_present or begin showing them images based on 
+what images they have liked or disliked until an equilibium is reached or the cap # of rounds exceeded"""
 def style_quiz():
     global best_style
 
@@ -275,15 +272,17 @@ def style_quiz():
     image.show()
     image.close()
 
-    if any_equil_reached == False:
-        print(f"{rounds} rounds hit--no equil")
+    # uncomment for more information
+    # if any_equil_reached == False:
+    #     print(f"{rounds} rounds hit--no equil")
 
     print_results()
     
 
     
+    
 
-
+# set up styles
 for style_name in list(data.keys()):
     try:
         style = Style(style_name)
